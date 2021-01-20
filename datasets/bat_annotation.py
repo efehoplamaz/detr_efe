@@ -53,8 +53,8 @@ class BatAnnotationDataSet(Dataset):
             d['area'] = area
             d['category_id'] = category_id
             anns_simplified.append(d)
-        target = {'annotations': anns_simplified, 'sampling_rate': sampling_rate}
-        
+        target = {'image_id': idx, 'annotations': anns_simplified, 'sampling_rate': sampling_rate}
+
         spec, target = self.prepare(spec_n, target)
         
         return spec, target
@@ -65,6 +65,11 @@ class BatConvert(object):
         self.return_masks = return_masks
 
     def __call__(self, image, target):
+
+        c, w, h = image.shape
+        
+        image_id = target["image_id"]
+        image_id = torch.tensor([image_id])
 
         anno = target["annotations"]
 
@@ -81,6 +86,11 @@ class BatConvert(object):
         area = torch.tensor([obj["area"] for obj in anno])
         target["area"] = area
         
+        target["image_id"] = image_id 
+
+        target["orig_size"] = torch.as_tensor([int(h), int(w)])
+        target["size"] = torch.as_tensor([int(h), int(w)])
+
         return image, target
 
 # class Rescale(object):
@@ -144,8 +154,8 @@ def build(image_set, args):
 
     CWD = os.getcwd()
     PATHS = {
-        "train_val": (CWD + '\\annotations\\train_val.json', CWD + '\\audio\\mc_2018\\audio\\'),
-        "test": (CWD + '\\annotations\\test.json', CWD + '\\audio\\mc_2019\\audio\\'),
+        "train_val": ('/home/s1764306/data/annotations/train_val.json', '/home/s1764306/data/audio/mc_2018/audio/'),
+        "test": ('/home/s1764306/data/annotations/test.json', '/home/s1764306/data/audio/mc_2019/audio/'),
     }
 
     if image_set == 'train_val':

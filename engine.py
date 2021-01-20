@@ -10,7 +10,7 @@ from typing import Iterable
 import torch
 
 import util.misc as utils
-from datasets.coco_eval import CocoEvaluator
+#from datasets.coco_eval import CocoEvaluator
 from datasets.panoptic_eval import PanopticEvaluator
 
 
@@ -29,8 +29,8 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
     for samples, targets in metric_logger.log_every(data_loader, print_freq, header):
 
         samples = samples.to(device)
-        samples.tensors = torch.nn.functional.interpolate(samples.tensors, size = (256, 512), mode='bilinear', align_corners=False)
-        print(samples.tensors.shape)
+        #samples.tensors = torch.nn.functional.interpolate(samples.tensors, size = (256, 512), mode='bilinear', align_corners=False)
+        #print(samples.tensors.shape)
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
         #print(targets)
         outputs = model(samples)
@@ -69,7 +69,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
 
 
 @torch.no_grad()
-def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, output_dir):
+def evaluate(model, criterion, postprocessors, data_loader, device, output_dir):
     model.eval()
     criterion.eval()
 
@@ -78,7 +78,7 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, out
     header = 'Test:'
 
     iou_types = tuple(k for k in ('segm', 'bbox') if k in postprocessors.keys())
-    coco_evaluator = CocoEvaluator(base_ds, iou_types)
+    coco_evaluator = None #CocoEvaluator(base_ds, iou_types)
     # coco_evaluator.coco_eval[iou_types[0]].params.iouThrs = [0, 0.1, 0.5, 0.75]
 
     panoptic_evaluator = None
