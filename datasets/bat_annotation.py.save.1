@@ -33,35 +33,29 @@ class BatAnnotationDataSet(Dataset):
         anns = self.bat_anns[idx]
         spec, sampling_rate, spec_duration = get_spectrogram_sampling_rate(self.root_dir + wav_name)
         
-        #if self.transform:
-        #    spec = self.transform(spec)
+        if self.transform:
+            spec = self.transform(spec)
             
-        #spec_n = torch.nn.functional.interpolate(spec.unsqueeze(0), size = self.spec_shape, mode='bilinear', align_corners=False)[0]
-        #spec_duration_resized = au.x_coords_to_time(spec_n.shape[2], sampling_rate, self.params['fft_win_length'], self.params['fft_overlap'])
-        x_shr_coeff = 512/spec.shape[1]
+        spec_n = torch.nn.functional.interpolate(spec.unsqueeze(0), size = self.spec_shape, mode='bilinear', align_corners=False)[0]
+        spec_duration_resized = au.x_coords_to_time(spec_n.shape[2], sampling_rate, self.params['fft_win_length'], self.params['fft_overlap'])
+        x_shr_coeff = spec_duration_resized/spec_duration
         
         anns_simplified = []
         for ann in anns['annotation']:
             d = {}
             width = (ann['end_time'] - ann['start_time']) * x_shr_coeff
             height = ann['high_freq'] - ann['low_freq']
-            category_id = 1
+            category_id = 0
             area = width * height
-            x = (ann['start_time'] * x_shr_coeff)
-            y = (ann['low_freq'])
-            d['bbox'] = [x, y, width, height]
+            c_x = (ann['start_time'] * x_shr_coeff) + (width/2)
+            c_y = (ann['high_freq']) - (height/2)
+            d['bbox'] = [c_x, c_y, width, height]
             d['area'] = area
             d['category_id'] = category_id
             anns_simplified.append(d)
         target = {'image_id': idx, 'annotations': anns_simplified, 'sampling_rate': sampling_rate}
 
-        spec, target = self.prepare(sepc, target)
-
-        if self.transform:
-            spec, target = self.transform(spec, target)
-
-        spec_n = torch.nn.functional.interpolate(spec.unsqueeze(0), size = self.spec_shape, mode = 'bilinear', align_corners = False)[0]
-
+        spec, target = self.prepare(spec_n, target)
         
         return spec, target
 
@@ -81,11 +75,6 @@ class BatConvert(object):
 
         boxes = [obj["bbox"] for obj in anno]
         boxes = torch.as_tensor(boxes, dtype=torch.float32).reshape(-1, 4)
-        boxes[:, 2:] += boxes[:, :2]
-        boxes[:, 0::2].clamp_(min=0, max=w)
-        boxes[:, 1::2].clamp_(min=0, max=h)
-        keep = (boxes[:, 3] > boxes[:, 1]) & (boxes[:, 2] > boxes[:, 0])
-        boxes = boxes[keep]
         #boxes = boxes / torch.tensor([w, h, w, h], dtype=torch.float32)
 
         classes = [obj["category_id"] for obj in anno]
@@ -131,32 +120,8 @@ class BatConvert(object):
 
 
 class ToTensor(object):
-    def __call__(self, spec, target):
-        return F.to_tensor(spec), target
-
-class Resize(object):
-    def __init(self, output_size):
-        self.output_size = output_size
-    delf __call__(self, spec, target):
-        init_w = spec.shape[1]
-        spec_n = torch.nn.functional.interpolate(spec.unsqueeze(0), size = self.output_size, mode='bilinear', align_corners=False)[0]
-        #target['']
-
-class Normalize(object):
-    def __init__(self, mean, std):
-        self.mean = mean
-        self.std = std
-    def __call__(self, image, target = None):
-        image = F.normalize(image, mean = self.mean, std= self.std)
-        if target is None:
-            return image, None
-        target = target.copy()
-        h, w = image.shape[-2:]
-        if "boxes" in target:
-            boxes = target["boxes"]
-            boxes = boxes / torch.tensor([w, h, w, h], dtype=torch.float32)
-            target["boxes"] = boxes
-        return image, target            
+    def __call__(self, spec):
+        return F.to_tensor(spec)
 
 class FixedResize(object):
     def __call__(self,spec):
@@ -175,16 +140,16 @@ class Compose(object):
     def __init__(self, transforms):
         self.transforms = transforms
 
-    def __call__(self, spec, target):
+    def __call__(self, spec):
         for t in self.transforms:
-            spec, target = t(spec, target)
-        return spec, target
+            spec = t(spec)
+        return spec
 
 def make_bat_transforms(image_set):
     if image_set == 'train_val':
-        return Compose([ToTensor(), Normalize([0.058526332422855], [0.1667903737826997])])
-    #if image_set == 'test':
-        #return Compose([ToTensor(), Normalize([0.058526332422855], [0.1667903737826997])])
+        return Compose([ToTensor(), FixedResize()])
+    if image_set == 'test':
+        return Compose([ToTensor(), FixedResize()])
 
 def build(image_set, args):
 
