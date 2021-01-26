@@ -80,8 +80,8 @@ class BatConvert(object):
         # guard against no boxes via resizing
         boxes = torch.as_tensor(boxes, dtype=torch.float32).reshape(-1, 4)
         boxes[:, 2:] += boxes[:, :2]
-        boxes[:, 0::2].clamp_(min=0, max=w)
-        boxes[:, 1::2].clamp_(min=0, max=h)
+        #boxes[:, 0::2].clamp_(min=0, max=w)
+        #boxes[:, 1::2].clamp_(min=0, max=h)
 
         classes = [obj["category_id"] for obj in anno]
         classes = torch.tensor(classes, dtype=torch.int64)
@@ -104,14 +104,15 @@ class BatConvert(object):
         target["orig_size"] = torch.as_tensor([int(h), int(w)])
         target["size"] = torch.as_tensor([int(h), int(w)])
 
+
         return image, target
 
 class Resize(object):
     def __init__(self, output_size):
         self.output_size = output_size
     def __call__(self, spec, target):
-        init_w = spec.shape[1]
-        init_h = spec.shape[0]
+        init_w = spec.shape[2]
+        init_h = spec.shape[1]
 
         x_shr = self.output_size[1]/init_w
         y_shr = self.output_size[0]/init_h
@@ -151,12 +152,12 @@ def build(image_set, args):
     PATHS = {
         
         ### LOCAL COMPUTER PATH
-        #"train_val": ('C:/Users/ehopl/Desktop/bat_data/annotations/train_val.json', 'C:/Users/ehopl/Desktop/bat_data/audio/mc_2018/audio/'),
-        #"test": ('C:/Users/ehopl/Desktop/bat_data/annotations/test.json', 'C:/Users/ehopl/Desktop/bat_data/audio/mc_2019/audio/'),
+        "train_val": ('C:/Users/ehopl/Desktop/bat_data/annotations/train_val.json', 'C:/Users/ehopl/Desktop/bat_data/audio/mc_2018/audio/'),
+        "test": ('C:/Users/ehopl/Desktop/bat_data/annotations/test.json', 'C:/Users/ehopl/Desktop/bat_data/audio/mc_2019/audio/'),
 
         ### GPU CLUSTER PATH
-        "train_val": ('/home/s1764306/data/annotations/train_val.json', '/home/s1764306/data/audio/mc_2018/audio/'),
-        "test": ('/home/s1764306/data/annotations/test.json', '/home/s1764306/data/audio/mc_2019/audio/'),
+        #"train_val": ('/home/s1764306/data/annotations/train_val.json', '/home/s1764306/data/audio/mc_2018/audio/'),
+        #"test": ('/home/s1764306/data/annotations/test.json', '/home/s1764306/data/audio/mc_2019/audio/'),
     }
 
     if image_set == 'train_val':
