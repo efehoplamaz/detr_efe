@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader, DistributedSampler
 
 import datasets
 import util.misc as utils
-from datasets import build_bat_dataset #build_dataset, get_coco_api_from_dataset, build_bat_dataset
+from datasets import build_bat_dataset
 from engine import evaluate, train_one_epoch
 from models import build_model
 
@@ -89,7 +89,7 @@ def get_args_parser():
 
     parser.add_argument('--output_dir', default='',
                         help='path where to save, empty for no saving')
-    parser.add_argument('--device', default='cuda',
+    parser.add_argument('--device', default='cpu',
                         help='device to use for training / testing')
     parser.add_argument('--seed', default=42, type=int)
     parser.add_argument('--resume', default='', help='resume from checkpoint')
@@ -113,7 +113,7 @@ def main(args):
     #    assert args.masks, "Frozen training is meant for segmentation only"
     print(args)
 
-    device = torch.device(args.device)    ### CPU device for now...
+    device = torch.device(args.device)
 
     # fix the seed for reproducibility
     seed = args.seed + utils.get_rank()
@@ -159,18 +159,6 @@ def main(args):
                                    collate_fn=utils.collate_fn, num_workers=0)
     data_loader_val = DataLoader(dataset_val, args.batch_size, sampler=sampler_val,
                                  drop_last=False, collate_fn=utils.collate_fn, num_workers=args.num_workers)
-
-    #if args.dataset_file == "coco_panoptic":
-        # We also evaluate AP during panoptic training, on original coco DS
-    #    coco_val = datasets.coco.build("val", args)
-    ##    base_ds = get_coco_api_from_dataset(coco_val)
-    #else:
-    #    base_ds = get_coco_api_from_dataset(dataset_val)
-
-    #if args.frozen_weights is not None:
-    #    checkpoint = torch.load(args.frozen_weights, map_location='cpu')
-    #    model_without_ddp.detr.load_state_dict(checkpoint['model'])
-
     output_dir = Path(args.output_dir)
     #if args.resume:
     #    if args.resume.startswith('https'):

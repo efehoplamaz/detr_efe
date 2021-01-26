@@ -1,6 +1,7 @@
 
 import torch
 import utils.audio_utils as au
+import datasets.transforms as T
 from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms.functional as F
 from torchvision import transforms, utils
@@ -13,16 +14,11 @@ import utils.audio_utils as au
 import os
 
 class BatAnnotationDataSet(Dataset):
-    def __init__(self, audio_file, ann_file, spec_shape = (256, 512), transform=None, return_masks = None):
+    def __init__(self, audio_file, ann_file, transform=None, return_masks = None):
         self.bat_anns = json.load(open(ann_file))
         self.root_dir = audio_file
         self.transform = transform
-        self.spec_shape = spec_shape
         self.prepare = BatConvert(return_masks)
-        self.params = {}
-        self.params['fft_win_length'] = 1024 / 441000.0  # 1024 / 441000.0
-        self.params['resize_factor'] = 0.5     # resize so the spectrogram at the input of the network
-        self.params['fft_overlap']    = 0.75 
 
     def __len__(self):
         return len(self.bat_anns)
@@ -32,37 +28,36 @@ class BatAnnotationDataSet(Dataset):
         wav_name = self.bat_anns[idx]['id']
         anns = self.bat_anns[idx]
         spec, sampling_rate, spec_duration = get_spectrogram_sampling_rate(self.root_dir + wav_name)
-        
-        #if self.transform:
-        #    spec = self.transform(spec)
-            
-        #spec_n = torch.nn.functional.interpolate(spec.unsqueeze(0), size = self.spec_shape, mode='bilinear', align_corners=False)[0]
-        #spec_duration_resized = au.x_coords_to_time(spec_n.shape[2], sampling_rate, self.params['fft_win_length'], self.params['fft_overlap'])
-        x_shr_coeff = 512/spec.shape[1]
-        
+      
         anns_simplified = []
+
         for ann in anns['annotation']:
             d = {}
-            width = (ann['end_time'] - ann['start_time']) * x_shr_coeff
+
+            ### GROUND TRUTH BBOX ANNOTATIONS
+            width = ann['end_time'] - ann['start_time']
             height = ann['high_freq'] - ann['low_freq']
-            category_id = 1
-            area = width * height
-            x = (ann['start_time'] * x_shr_coeff)
-            y = (ann['low_freq'])
+            x = ann['start_time']
+            y = ann['low_freq']
             d['bbox'] = [x, y, width, height]
+
+            ### AREA = W x H
+            area = width * height
             d['area'] = area
+
+            ### CATEGORY ID IS 1 FOR NOT, WILL BE CHANGED LATER
+            category_id = 1
             d['category_id'] = category_id
+
             anns_simplified.append(d)
+
         target = {'image_id': idx, 'annotations': anns_simplified, 'sampling_rate': sampling_rate}
 
-        spec, target = self.prepare(sepc, target)
+        spec, target = self.prepare(spec, target)
 
         if self.transform:
             spec, target = self.transform(spec, target)
-
-        spec_n = torch.nn.functional.interpolate(spec.unsqueeze(0), size = self.spec_shape, mode = 'bilinear', align_corners = False)[0]
-
-        
+            
         return spec, target
 
 
@@ -79,84 +74,57 @@ class BatConvert(object):
 
         anno = target["annotations"]
 
+        anno = [obj for obj in anno if 'iscrowd' not in obj or obj['iscrowd'] == 0]
+
         boxes = [obj["bbox"] for obj in anno]
+        # guard against no boxes via resizing
         boxes = torch.as_tensor(boxes, dtype=torch.float32).reshape(-1, 4)
         boxes[:, 2:] += boxes[:, :2]
         boxes[:, 0::2].clamp_(min=0, max=w)
         boxes[:, 1::2].clamp_(min=0, max=h)
-        keep = (boxes[:, 3] > boxes[:, 1]) & (boxes[:, 2] > boxes[:, 0])
-        boxes = boxes[keep]
-        #boxes = boxes / torch.tensor([w, h, w, h], dtype=torch.float32)
 
         classes = [obj["category_id"] for obj in anno]
         classes = torch.tensor(classes, dtype=torch.int64)
 
+        keep = (boxes[:, 3] > boxes[:, 1]) & (boxes[:, 2] > boxes[:, 0])
+        boxes = boxes[keep]
+        classes = classes[keep]
+
         target = {}
         target["boxes"] = boxes
         target["labels"] = classes
+        target["image_id"] = image_id
 
+        # for conversion to coco api
         area = torch.tensor([obj["area"] for obj in anno])
-        target["area"] = area
-        
-        target["image_id"] = image_id 
+        iscrowd = torch.tensor([obj["iscrowd"] if "iscrowd" in obj else 0 for obj in anno])
+        target["area"] = area[keep]
+        target["iscrowd"] = iscrowd[keep]
 
         target["orig_size"] = torch.as_tensor([int(h), int(w)])
         target["size"] = torch.as_tensor([int(h), int(w)])
 
         return image, target
 
-# class Rescale(object):
-
-#     def __init__(self, output_size):
-#         assert isinstance(output_size, (int, tuple))
-#         self.output_size = output_size
-
-#     def __call__(self, spec, target):
-
-#         c, h, w = spec.shape
-
-#         if isinstance(self.output_size, int):
-#             if h > w:
-#                 new_h, new_w = self.output_size * h / w, self.output_size
-#             else:
-#                 new_h, new_w = self.output_size, self.output_size * w / h
-#         else:
-#             new_h, new_w = self.output_size
-
-#         new_h, new_w = int(new_h), int(new_w)
-
-#         spec = transform.resize(spec[0].numpy(), (new_h, new_w))
-
-#         return torch.from_numpy(spec).unsqueeze(0), target
-
-
-class ToTensor(object):
-    def __call__(self, spec, target):
-        return F.to_tensor(spec), target
-
 class Resize(object):
-    def __init(self, output_size):
+    def __init__(self, output_size):
         self.output_size = output_size
-    delf __call__(self, spec, target):
+    def __call__(self, spec, target):
         init_w = spec.shape[1]
-        spec_n = torch.nn.functional.interpolate(spec.unsqueeze(0), size = self.output_size, mode='bilinear', align_corners=False)[0]
-        #target['']
+        init_h = spec.shape[0]
 
-class Normalize(object):
-    def __init__(self, mean, std):
-        self.mean = mean
-        self.std = std
-    def __call__(self, image, target = None):
-        image = F.normalize(image, mean = self.mean, std= self.std)
-        if target is None:
-            return image, None
-        target = target.copy()
-        h, w = image.shape[-2:]
-        if "boxes" in target:
-            boxes = target["boxes"]
-            boxes = boxes / torch.tensor([w, h, w, h], dtype=torch.float32)
-            target["boxes"] = boxes
-        return image, target            
+        x_shr = self.output_size[1]/init_w
+        y_shr = self.output_size[0]/init_h
+
+        spec_n = torch.nn.functional.interpolate(spec.unsqueeze(0), size = self.output_size, mode='bilinear', align_corners=False)[0]
+        for i, bbox in enumerate(target["boxes"]):
+            bbox[0] = bbox[0] * x_shr
+            bbox[1] = bbox[1] * y_shr
+            bbox[2] = bbox[2] * x_shr
+            bbox[3] = bbox[3] * y_shr
+            target["area"][i] = bbox[2] * bbox[3]
+        
+        return spec_n, target       
 
 class FixedResize(object):
     def __call__(self,spec):
@@ -171,18 +139,9 @@ class FixedResize(object):
                 pass
         return spec
 
-class Compose(object):
-    def __init__(self, transforms):
-        self.transforms = transforms
-
-    def __call__(self, spec, target):
-        for t in self.transforms:
-            spec, target = t(spec, target)
-        return spec, target
-
 def make_bat_transforms(image_set):
     if image_set == 'train_val':
-        return Compose([ToTensor(), Normalize([0.058526332422855], [0.1667903737826997])])
+        return T.Compose([T.ToTensor(), T.Normalize([0.058526332422855], [0.1667903737826997]), Resize((256, 512))])
     #if image_set == 'test':
         #return Compose([ToTensor(), Normalize([0.058526332422855], [0.1667903737826997])])
 
@@ -190,6 +149,12 @@ def build(image_set, args):
 
     CWD = os.getcwd()
     PATHS = {
+        
+        ### LOCAL COMPUTER PATH
+        #"train_val": ('C:/Users/ehopl/Desktop/bat_data/annotations/train_val.json', 'C:/Users/ehopl/Desktop/bat_data/audio/mc_2018/audio/'),
+        #"test": ('C:/Users/ehopl/Desktop/bat_data/annotations/test.json', 'C:/Users/ehopl/Desktop/bat_data/audio/mc_2019/audio/'),
+
+        ### GPU CLUSTER PATH
         "train_val": ('/home/s1764306/data/annotations/train_val.json', '/home/s1764306/data/audio/mc_2018/audio/'),
         "test": ('/home/s1764306/data/annotations/test.json', '/home/s1764306/data/audio/mc_2019/audio/'),
     }
