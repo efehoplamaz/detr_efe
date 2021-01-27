@@ -70,7 +70,6 @@ class BackboneBase(nn.Module):
         self.num_channels = num_channels
 
     def forward(self, tensor_list: NestedTensor):
-        #print(torch.rand(1,1,64,64).dtype, tensor_list.tensors.float().dtype)
         xs = self.body(tensor_list.tensors.float())
         out: Dict[str, NestedTensor] = {}
         for name, x in xs.items():

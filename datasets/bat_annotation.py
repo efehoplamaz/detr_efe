@@ -28,6 +28,12 @@ class BatAnnotationDataSet(Dataset):
         wav_name = self.bat_anns[idx]['id']
         anns = self.bat_anns[idx]
         spec, sampling_rate, spec_duration = get_spectrogram_sampling_rate(self.root_dir + wav_name)
+        
+        fname = self.root_dir + wav_name
+        with contextlib.closing(wave.open(fname,'r')) as f:
+            frames = f.getnframes()
+            rate = f.getframerate()
+            duration = frames / float(rate)
       
         anns_simplified = []
 
@@ -35,10 +41,10 @@ class BatAnnotationDataSet(Dataset):
             d = {}
 
             ### GROUND TRUTH BBOX ANNOTATIONS
-            width = ann['end_time'] - ann['start_time']
-            height = ann['high_freq'] - ann['low_freq']
-            x = ann['start_time']
-            y = ann['low_freq']
+            width = (ann['end_time'] - ann['start_time']) * (spec.shape[1]/duration)
+            height = (ann['high_freq'] - ann['low_freq']) * (spec.shape[0]/150000)
+            x = (ann['start_time']) * (spec.shape[1]/duration)
+            y = (ann['low_freq']) * (spec.shape[0]/150000)
             d['bbox'] = [x, y, width, height]
 
             ### AREA = W x H
@@ -58,7 +64,7 @@ class BatAnnotationDataSet(Dataset):
         if self.transform:
             spec, target = self.transform(spec, target)
             
-        return spec, target
+        return spec, target, sampling_rate, wav_name
 
 
 class BatConvert(object):

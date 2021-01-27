@@ -12,6 +12,7 @@ import torch
 import util.misc as utils
 #from datasets.coco_eval import CocoEvaluator
 from datasets.panoptic_eval import PanopticEvaluator
+from models.detr import PostProcess
 
 
 def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
@@ -32,7 +33,9 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
         outputs = model(samples)
         #print(targets[0]['boxes'])
-        #print(outputs)
+        #print("output boxes")
+        #t = PostProcess()
+        #print(t(outputs, torch.tensor([[256, 512],[256, 512],[256, 512],[256, 512]])))
         #sys.exit()
         loss_dict = criterion(outputs, targets)
         weight_dict = criterion.weight_dict
