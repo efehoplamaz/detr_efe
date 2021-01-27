@@ -66,7 +66,7 @@ class BatAnnotationDataSet(Dataset):
         if self.transform:
             spec, target = self.transform(spec, target)
             
-        return spec, target, sampling_rate, wav_name
+        return spec, target
 
 
 class BatConvert(object):
