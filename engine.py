@@ -8,7 +8,7 @@ import sys
 from typing import Iterable
 
 import torch
-
+import json
 import util.misc as utils
 #from datasets.coco_eval import CocoEvaluator
 from datasets.panoptic_eval import PanopticEvaluator
@@ -26,17 +26,29 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
     header = 'Epoch: [{}]'.format(epoch)
     print_freq = 10
 
+    #######
+    ## EFE ADDED THIS PART
+
+    pp = PostProcess()
+    l_d = []
+
+    #######
+
     #print(next(ittermetric_logger.log_every(data_loader, print_freq, header))
     for samples, targets in metric_logger.log_every(data_loader, print_freq, header):
 
         samples = samples.to(device)
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
         outputs = model(samples)
-        #print(targets[0]['boxes'])
-        #print("output boxes")
-        #t = PostProcess()
-        #print(t(outputs, torch.tensor([[256, 512],[256, 512],[256, 512],[256, 512]])))
-        #sys.exit()
+
+        #########
+        if epoch == 1:
+            model_output = pp(outputs, torch.tensor([[256, 512],[256, 512],[256, 512],[256, 512]]))
+            for i, elm in enumerate(model_output):
+                elm.update({'image_id': targets[i]['image_id']})
+            l_d += model_output
+        #########
+
         loss_dict = criterion(outputs, targets)
         weight_dict = criterion.weight_dict
         losses = sum(loss_dict[k] * weight_dict[k] for k in loss_dict.keys() if k in weight_dict)
@@ -68,6 +80,12 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
     print("Averaged stats:", metric_logger)
+
+    #########
+    with open('/home/s1764306/slurm_logs/predicted_bboxes.json', 'w') as f:
+        json.dump(l_d , fout)
+    #########
+
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
 
 

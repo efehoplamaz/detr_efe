@@ -160,12 +160,12 @@ def build(image_set, args):
     PATHS = {
         
         ### LOCAL COMPUTER PATH
-        "train_val": ('C:/Users/ehopl/Desktop/bat_data/annotations/train_val.json', 'C:/Users/ehopl/Desktop/bat_data/audio/mc_2018/audio/'),
-        "test": ('C:/Users/ehopl/Desktop/bat_data/annotations/test.json', 'C:/Users/ehopl/Desktop/bat_data/audio/mc_2019/audio/'),
+        #"train_val": ('C:/Users/ehopl/Desktop/bat_data/annotations/train_val.json', 'C:/Users/ehopl/Desktop/bat_data/audio/mc_2018/audio/'),
+        #"test": ('C:/Users/ehopl/Desktop/bat_data/annotations/test.json', 'C:/Users/ehopl/Desktop/bat_data/audio/mc_2019/audio/'),
 
         ### GPU CLUSTER PATH
-        #"train_val": ('/home/s1764306/data/annotations/train_val.json', '/home/s1764306/data/audio/mc_2018/audio/'),
-        #"test": ('/home/s1764306/data/annotations/test.json', '/home/s1764306/data/audio/mc_2019/audio/'),
+        "train_val": ('/home/s1764306/data/annotations/train_val.json', '/home/s1764306/data/audio/mc_2018/audio/'),
+        "test": ('/home/s1764306/data/annotations/test.json', '/home/s1764306/data/audio/mc_2019/audio/'),
     }
 
     if image_set == 'train_val':
