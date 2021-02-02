@@ -54,7 +54,7 @@ class BatAnnotationDataSet(Dataset):
             d['area'] = area
 
             ### CATEGORY ID IS 1 FOR NOT, WILL BE CHANGED LATER
-            category_id = 1
+            category_id = 0
             d['category_id'] = category_id
 
             anns_simplified.append(d)
