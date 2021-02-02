@@ -44,9 +44,9 @@ class BatAnnotationDataSet(Dataset):
 
             ### GROUND TRUTH BBOX ANNOTATIONS
             width = (ann['end_time'] - ann['start_time']) * (spec.shape[1]/duration)
-            height = (ann['high_freq'] - ann['low_freq']) * (spec.shape[0]/150000)
+            height = (ann['high_freq'] - ann['low_freq']) * (spec.shape[0]/120000)
             x = (ann['start_time']) * (spec.shape[1]/duration)
-            y = (ann['low_freq']) * (spec.shape[0]/150000)
+            y = (ann['low_freq']) * (spec.shape[0]/120000)
             d['bbox'] = [x, y, width, height]
 
             ### AREA = W x H

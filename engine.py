@@ -5,6 +5,7 @@ Train and eval functions used in main.py
 import math
 import os
 import sys
+import codecs
 from typing import Iterable
 
 import torch
@@ -17,7 +18,7 @@ from models.detr import PostProcess
 
 def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
                     data_loader: Iterable, optimizer: torch.optim.Optimizer,
-                    device: torch.device, epoch: int, max_norm: float = 0):
+                    device: torch.device, epoch: int, last_epoch, max_norm: float = 0):
     model.train()
     criterion.train()
     metric_logger = utils.MetricLogger(delimiter="  ")
@@ -40,12 +41,14 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
         samples = samples.to(device)
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
         outputs = model(samples)
+        outputs_j = {k: v.to(device) for k, v in outputs.items() if k != "aux_outputs"}
 
         #########
-        if epoch == 1:
-            model_output = pp(outputs, torch.tensor([[256, 512],[256, 512],[256, 512],[256, 512]]))
+        if epoch == last_epoch-1:
+            model_output = pp(outputs_j, torch.tensor([[256, 512],[256, 512],[256, 512],[256, 512]]).to(device))
+            model_output = [{k : v.cpu().numpy().tolist() for k, v in o.items()} for o in model_output]
             for i, elm in enumerate(model_output):
-                elm.update({'image_id': targets[i]['image_id']})
+                elm.update({'image_id': targets[i]['image_id'].item()})
             l_d += model_output
         #########
 
@@ -82,8 +85,10 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
     print("Averaged stats:", metric_logger)
 
     #########
-    with open('/home/s1764306/slurm_logs/predicted_bboxes.json', 'w') as f:
-        json.dump(l_d , fout)
+    json_file = "/home/s1764306/slurm_logs/predicted_bboxes.json" 
+    json.dump(l_d, codecs.open(json_file, 'w', encoding='utf-8'), sort_keys=True, indent=4)
+    #with open('/home/s1764306/slurm_logs/predicted_bboxes.json', 'w') as f:
+    #    json.dump(l_d , f)
     #########
 
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}

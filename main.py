@@ -185,7 +185,7 @@ def main(args):
         if args.distributed:
             sampler_train.set_epoch(epoch)
         train_stats = train_one_epoch(
-            model, criterion, data_loader_train, optimizer, device, epoch,
+            model, criterion, data_loader_train, optimizer, device, epoch, args.epochs,
             args.clip_max_norm)
         lr_scheduler.step()
         if args.output_dir:
