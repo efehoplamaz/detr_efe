@@ -53,7 +53,7 @@ class BatAnnotationDataSet(Dataset):
             area = width * height
             d['area'] = area
 
-            ### CATEGORY ID IS 1 FOR NOT, WILL BE CHANGED LATER
+            ### CATEGORY ID IS 1 FOR NOT BAT, WILL BE CHANGED LATER
             category_id = 0
             d['category_id'] = category_id
 

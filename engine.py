@@ -45,11 +45,11 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
 
         #########
         if epoch == last_epoch-1:
-           model_output = pp(outputs_j, torch.tensor([[256, 512],[256, 512],[256, 512],[256, 512]]).to(device))
-           model_output = [{k : v.cpu().numpy().tolist() for k, v in o.items()} for o in model_output]
-           for i, elm in enumerate(model_output):
-               elm.update({'image_id': targets[i]['image_id'].item()})
-           l_d += model_output
+            model_output = pp(outputs_j, torch.tensor([[256, 512],[256, 512],[256, 512],[256, 512]]).to(device))
+            model_output = [{k : v.cpu().numpy().tolist() for k, v in o.items()} for o in model_output]
+            for i, elm in enumerate(model_output):
+                elm.update({'image_id': targets[i]['image_id'].item()})
+            l_d += model_output
         #########
 
         loss_dict = criterion(outputs, targets)
