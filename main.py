@@ -35,7 +35,7 @@ def get_args_parser():
     parser.add_argument('--frozen_weights', type=str, default=None,
                         help="Path to the pretrained model. If set, only the mask head will be trained")
     # * Backbone
-    parser.add_argument('--backbone', default='resnet18', type=str,
+    parser.add_argument('--backbone', default='resnet50', type=str,
                         help="Name of the convolutional backbone to use")
     parser.add_argument('--dilation', action='store_true',
                         help="If true, we replace stride with dilation in the last convolutional block (DC5)")
@@ -160,17 +160,24 @@ def main(args):
     data_loader_val = DataLoader(dataset_val, args.batch_size, sampler=sampler_val,
                                  drop_last=False, collate_fn=utils.collate_fn, num_workers=args.num_workers)
     output_dir = Path(args.output_dir)
-    #if args.resume:
-    #    if args.resume.startswith('https'):
-    #        checkpoint = torch.hub.load_state_dict_from_url(
-    #            args.resume, map_location='cpu', check_hash=True)
-    #    else:
-    #        checkpoint = torch.load(args.resume, map_location='cpu')
-    #    model_without_ddp.load_state_dict(checkpoint['model'])
-    #    if not args.eval and 'optimizer' in checkpoint and 'lr_scheduler' in checkpoint and 'epoch' in checkpoint:
-    #        optimizer.load_state_dict(checkpoint['optimizer'])
-    #        lr_scheduler.load_state_dict(checkpoint['lr_scheduler'])
-    #        args.start_epoch = checkpoint['epoch'] + 1
+
+    if args.resume:
+       if args.resume.startswith('https'):
+           checkpoint = torch.hub.load_state_dict_from_url(
+               args.resume, map_location='cpu', check_hash=True)
+       else:
+           checkpoint = torch.load(args.resume, map_location='cpu')
+
+       ####
+       del checkpoint["model"]["class_embed.weight"]
+       del checkpoint["model"]["class_embed.bias"]
+       ####
+       model_without_ddp.load_state_dict(checkpoint['model'], strict = False)
+
+       if not args.eval and 'optimizer' in checkpoint and 'lr_scheduler' in checkpoint and 'epoch' in checkpoint:
+           optimizer.load_state_dict(checkpoint['optimizer'])
+           lr_scheduler.load_state_dict(checkpoint['lr_scheduler'])
+           args.start_epoch = checkpoint['epoch'] + 1
 
     if args.eval:
         test_stats, coco_evaluator = evaluate(model, criterion, postprocessors,

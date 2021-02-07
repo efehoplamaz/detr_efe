@@ -132,7 +132,11 @@ class Resize(object):
             bbox[2] = bbox[2] * x_shr
             bbox[3] = bbox[3] * y_shr
             target["area"][i] = bbox[2] * bbox[3]
-        
+
+        ####
+        spec_n = spec_n.repeat(3,1,1)
+        ####
+
         return spec_n, target       
 
 class FixedResize(object):
@@ -151,8 +155,8 @@ class FixedResize(object):
 def make_bat_transforms(image_set):
     if image_set == 'train_val':
         return T.Compose([T.ToTensor(), T.Normalize([0.058526332422855], [0.1667903737826997]), Resize((256, 512))])
-    #if image_set == 'test':
-        #return Compose([ToTensor(), Normalize([0.058526332422855], [0.1667903737826997])])
+    if image_set == 'test':
+        return T.Compose([T.ToTensor(), T.Normalize([0.050141380321473965], [0.3160132308495623]), Resize((256, 512))])
 
 def build(image_set, args):
 
