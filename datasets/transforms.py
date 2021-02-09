@@ -255,6 +255,11 @@ class Normalize(object):
             boxes = box_xyxy_to_cxcywh(boxes)
             boxes = boxes / torch.tensor([w, h, w, h], dtype=torch.float32)
             target["boxes"] = boxes
+
+        ####
+        image = image.repeat(3,1,1)
+        ####
+
         return image, target
 
 
