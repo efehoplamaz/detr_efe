@@ -11,8 +11,8 @@ from typing import Iterable
 import torch
 import json
 import util.misc as utils
-#from datasets.coco_eval import CocoEvaluator
-from datasets.panoptic_eval import PanopticEvaluator
+from datasets.coco_eval import CocoEvaluator
+#from datasets.panoptic_eval import PanopticEvaluator
 from models.detr import PostProcess
 
 

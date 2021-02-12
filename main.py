@@ -186,6 +186,8 @@ def main(args):
             utils.save_on_master(coco_evaluator.coco_eval["bbox"].eval, output_dir / "eval.pth")
         return
 
+    base_ds = dataset_val
+
     print("Start training")
     start_time = time.time()
     for epoch in range(args.start_epoch, args.epochs):
