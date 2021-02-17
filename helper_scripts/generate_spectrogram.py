@@ -70,3 +70,4 @@ def display_spectrogram(audio_file, spec, sampling_rate, annotations):
 	plt.xlabel('Time - secs')
 	plt.title(os.path.basename(audio_file))
 	plt.show()
+	fig.savefig('./test/aa.png')
