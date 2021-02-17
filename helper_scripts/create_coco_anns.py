@@ -12,11 +12,15 @@ parser.add_argument('--dataset')
 args = parser.parse_args()
 
 if args.dataset == 'train':
-	PATH = 'C:/Users/ehopl/Desktop/bat_data/annotations/BritishBatCalls_MartynCooke_2018_1_sec_train_expert.json'
-	AUDIO_PATH = 'C:/Users/ehopl/Desktop/bat_data/audio/mc_2018/audio/'
+	#PATH = 'C:/Users/ehopl/Desktop/bat_data/annotations/BritishBatCalls_MartynCooke_2018_1_sec_train_expert.json'
+	#AUDIO_PATH = 'C:/Users/ehopl/Desktop/bat_data/audio/mc_2018/audio/'
+        PATH = '/home/s1764306/data/annotations/train_val.json'
+        AUDIO_PATH = '/home/s1764306/data/audio/mc_2018/audio/'
 elif args.dataset == 'test':
-	PATH = 'C:/Users/ehopl/Desktop/bat_data/annotations/BritishBatCalls_MartynCooke_2019_1_sec_train_expert.json'
-	AUDIO_PATH = 'C:/Users/ehopl/Desktop/bat_data/audio/mc_2019/audio/'
+	#PATH = 'C:/Users/ehopl/Desktop/bat_data/annotations/BritishBatCalls_MartynCooke_2019_1_sec_train_expert.json'
+	#AUDIO_PATH = 'C:/Users/ehopl/Desktop/bat_data/audio/mc_2019/audio/'
+        PATH = '/home/s1764306/data/annotations/test.json'
+        AUDIO_PATH = '/home/s1764306/data/audio/mc_2019/audio/'
 else:
 	print('No dataset like that!')
 	sys.exit()
@@ -56,10 +60,10 @@ for i, ann in enumerate(data):
 	image_unq_id += 1
 
 if args.dataset == 'train':
-	with open('../data/coco_v_annotations/coco_v_train.json', 'w') as json_file:
+	with open('/home/s1764306/data/annotations/coco_v_train.json', 'w') as json_file:
 	    json.dump(coco_data, json_file)
 else:
-	with open('../data/coco_v_annotations/coco_v_test.json', 'w') as json_file:
+	with open('/home/s1764306/data/annotations/coco_v_test.json', 'w') as json_file:
 	    json.dump(coco_data, json_file)	
 
 
