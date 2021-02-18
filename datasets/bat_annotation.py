@@ -1,72 +1,40 @@
 
+from pathlib import Path
+
 import torch
-import utils.audio_utils as au
-import datasets.transforms as T
-from torch.utils.data import Dataset, DataLoader
+import torch.utils.data
+import torchvision
+
+import transforms as T
 import torchvision.transforms.functional as F
-from torchvision import transforms, utils
-from skimage import io, transform
-from generate_spectrogram import get_spectrogram_sampling_rate, display_spectrogram
-from matplotlib import pyplot as plt
+from generate_spectrogram import get_spectrogram_sampling_rate, display_spectrogram_with_predictions, display_spectrogram_gt
+
 import numpy as np
 import json
-import utils.audio_utils as au
 import os
-import wave
-import contextlib
 
-class BatAnnotationDataSet(Dataset):
-    def __init__(self, audio_file, ann_file, transform=None, return_masks = None):
-        self.bat_anns = json.load(open(ann_file))
-        self.root_dir = audio_file
-        self.transform = transform
+class BatDetection(torchvision.datasets.CocoDetection):
+    def __init__(self, audio_folder, ann_file, transforms, return_masks):
+        super(BatDetection, self).__init__(audio_folder, ann_file)
+        self._transforms = transforms
         self.prepare = BatConvert(return_masks)
-
-    def __len__(self):
-        return len(self.bat_anns)
-
-    def __getitem__(self, idx):
-
-        wav_name = self.bat_anns[idx]['id']
-        anns = self.bat_anns[idx]
-        spec, sampling_rate, spec_duration = get_spectrogram_sampling_rate(self.root_dir + wav_name)
         
-        fname = self.root_dir + wav_name
-        with contextlib.closing(wave.open(fname,'r')) as f:
-            frames = f.getnframes()
-            rate = f.getframerate()
-            duration = frames / float(rate)
-      
-        anns_simplified = []
+    def __getitem__(self, index):
+        coco = self.coco
+        img_id = self.ids[index]
+        ann_ids = coco.getAnnIds(imgIds=img_id)
+        target = coco.loadAnns(ann_ids)
 
-        for ann in anns['annotation']:
-            d = {}
-
-            ### GROUND TRUTH BBOX ANNOTATIONS
-            width = (ann['end_time'] - ann['start_time']) * (spec.shape[1]/duration)
-            height = (ann['high_freq'] - ann['low_freq']) * (spec.shape[0]/120000)
-            x = (ann['start_time']) * (spec.shape[1]/duration)
-            y = (ann['low_freq']) * (spec.shape[0]/120000)
-            d['bbox'] = [x, y, width, height]
-
-            ### AREA = W x H
-            area = width * height
-            d['area'] = area
-
-            ### CATEGORY ID IS 1 FOR NOT BAT, WILL BE CHANGED LATER
-            category_id = 0
-            d['category_id'] = category_id
-
-            anns_simplified.append(d)
-
-        target = {'image_id': idx, 'annotations': anns_simplified, 'sampling_rate': sampling_rate}
-
-        spec, target = self.prepare(spec, target)
-
-        if self.transform:
-            spec, target = self.transform(spec, target)
+        path = coco.loadImgs(img_id)[0]['file_name']
             
-        return spec, target
+        img, sampling_rate, spec_duration = get_spectrogram_sampling_rate(os.path.join(self.root, path))
+             
+        image_id = self.ids[index]
+        target = {'image_id': image_id, 'annotations': target}
+        img, target = self.prepare(img, target)
+        if self._transforms is not None:
+            img, target = self._transforms(img, target)
+        return img, target
 
 
 class BatConvert(object):
@@ -88,8 +56,8 @@ class BatConvert(object):
         # guard against no boxes via resizing
         boxes = torch.as_tensor(boxes, dtype=torch.float32).reshape(-1, 4)
         boxes[:, 2:] += boxes[:, :2]
-        #boxes[:, 0::2].clamp_(min=0, max=w)
-        #boxes[:, 1::2].clamp_(min=0, max=h)
+        boxes[:, 0::2].clamp_(min=0, max=w)
+        boxes[:, 1::2].clamp_(min=0, max=h)
 
         classes = [obj["category_id"] for obj in anno]
         classes = torch.tensor(classes, dtype=torch.int64)
@@ -135,18 +103,18 @@ class Resize(object):
 
         return spec_n, target       
 
-class FixedResize(object):
-    def __call__(self,spec):
-        if spec.shape[1] == 256:
-            if spec.shape[2] < 1718:
-                target_tensor = torch.zeros(1, spec.shape[1], 1718)
-                target_tensor[:, :, :spec.shape[2]] = spec
-                spec = target_tensor
-            elif spec.shape[2] > 1718:
-                spec = spec[:,:,:1718]
-            else:
-                pass
-        return spec
+# class FixedResize(object):
+#     def __call__(self,spec):
+#         if spec.shape[1] == 256:
+#             if spec.shape[2] < 1718:
+#                 target_tensor = torch.zeros(1, spec.shape[1], 1718)
+#                 target_tensor[:, :, :spec.shape[2]] = spec
+#                 spec = target_tensor
+#             elif spec.shape[2] > 1718:
+#                 spec = spec[:,:,:1718]
+#             else:
+#                 pass
+#         return spec
 
 def make_bat_transforms(image_set):
     if image_set == 'train_val':
@@ -164,19 +132,19 @@ def build(image_set, args):
         #"test": ('C:/Users/ehopl/Desktop/bat_data/annotations/test.json', 'C:/Users/ehopl/Desktop/bat_data/audio/mc_2019/audio/'),
 
         ### GPU CLUSTER PATH
-        "train_val": ('/home/s1764306/data/annotations/train_val.json', '/home/s1764306/data/audio/mc_2018/audio/'),
-        "test": ('/home/s1764306/data/annotations/test.json', '/home/s1764306/data/audio/mc_2019/audio/'),
+        "train_val": ('/home/s1764306/data/annotations/coco_v_train.json', '/home/s1764306/data/audio/mc_2018/audio/'),
+        "test": ('/home/s1764306/data/annotations/coco_v_test.json', '/home/s1764306/data/audio/mc_2019/audio/'),
     }
 
     if image_set == 'train_val':
         ann_file, audio_file = PATHS['train_val']
-        dataset = BatAnnotationDataSet(ann_file = ann_file, audio_file= audio_file, transform=make_bat_transforms(image_set))
+        dataset = BatDetection(ann_file = ann_file, audio_folder= audio_file, transform=make_bat_transforms(image_set), return_masks = False)
         train_set, val_set = torch.utils.data.random_split(dataset, [int(len(dataset)*0.8), len(dataset)-int(len(dataset)*0.8)])
         return train_set, val_set
 
     elif image_set == 'test':
         ann_file, audio_file = PATHS['test']
-        dataset = BatAnnotationDataSet(ann_file = ann_file, audio_file= audio_file, transform=make_bat_transforms(image_set))
+        dataset = BatDetection(ann_file = ann_file, audio_folder= audio_file, transform=make_bat_transforms(image_set), return_masks = False)
         return dataset
     else:
         return None

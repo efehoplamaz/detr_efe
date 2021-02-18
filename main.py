@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader, DistributedSampler
 
 import datasets
 import util.misc as utils
-from datasets import build_bat_dataset
+from datasets import build_bat_dataset, get_coco_api_from_dataset
 from engine import evaluate, train_one_epoch
 from models import build_model
 
@@ -159,6 +159,15 @@ def main(args):
                                    collate_fn=utils.collate_fn, num_workers=0)
     data_loader_val = DataLoader(dataset_val, args.batch_size, sampler=sampler_val,
                                  drop_last=False, collate_fn=utils.collate_fn, num_workers=args.num_workers)
+
+    if args.dataset_file == "coco_panoptic":
+    # We also evaluate AP during panoptic training, on original coco DS
+        coco_val = datasets.coco.build("val", args)
+        base_ds = get_coco_api_from_dataset(coco_val)
+    else:
+        base_ds = get_coco_api_from_dataset(dataset_val)
+
+
     output_dir = Path(args.output_dir)
 
     if args.resume:
@@ -181,12 +190,10 @@ def main(args):
 
     if args.eval:
         test_stats, coco_evaluator = evaluate(model, criterion, postprocessors,
-                                              data_loader_val, device, args.output_dir)
+                                              data_loader_val, base_ds, device, args.output_dir)
         if args.output_dir:
             utils.save_on_master(coco_evaluator.coco_eval["bbox"].eval, output_dir / "eval.pth")
         return
-
-    base_ds = dataset_val
 
     print("Start training")
     start_time = time.time()
