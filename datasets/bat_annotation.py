@@ -5,9 +5,9 @@ import torch
 import torch.utils.data
 import torchvision
 
-import transforms as T
+import datasets.transforms as T
 import torchvision.transforms.functional as F
-from generate_spectrogram import get_spectrogram_sampling_rate, display_spectrogram_with_predictions, display_spectrogram_gt
+from generate_spectrogram import get_spectrogram_sampling_rate
 
 import numpy as np
 import json
@@ -138,13 +138,13 @@ def build(image_set, args):
 
     if image_set == 'train_val':
         ann_file, audio_file = PATHS['train_val']
-        dataset = BatDetection(ann_file = ann_file, audio_folder= audio_file, transform=make_bat_transforms(image_set), return_masks = False)
+        dataset = BatDetection(ann_file = ann_file, audio_folder= audio_file, transforms=make_bat_transforms(image_set), return_masks = False)
         train_set, val_set = torch.utils.data.random_split(dataset, [int(len(dataset)*0.8), len(dataset)-int(len(dataset)*0.8)])
         return train_set, val_set
 
     elif image_set == 'test':
         ann_file, audio_file = PATHS['test']
-        dataset = BatDetection(ann_file = ann_file, audio_folder= audio_file, transform=make_bat_transforms(image_set), return_masks = False)
+        dataset = BatDetection(ann_file = ann_file, audio_folder= audio_file, transforms=make_bat_transforms(image_set), return_masks = False)
         return dataset
     else:
         return None

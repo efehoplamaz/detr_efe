@@ -71,7 +71,7 @@ def plot_logs(logs, fields=('class_error', 'loss_bbox_unscaled', 'mAP'), ewm_col
     for ax, field in zip(axs, fields):
         ax.legend([Path(p).name for p in logs])
         ax.set_title(field)
-    fig.savefig('test.jpg')
+    fig.savefig('mAP_graph.jpg')
 
 
 def plot_precision_recall(files, naming_scheme='iter'):
@@ -105,8 +105,9 @@ def plot_precision_recall(files, naming_scheme='iter'):
     axs[0].legend(names)
     axs[1].set_title('Scores / Recall')
     axs[1].legend(names)
+    fig.savefig('precision_recall.jpg')
     return fig, axs
 
 if __name__ == '__main__':
     #plot_logs(Path('/home/s1764306/slurm_logs/env_test'))
-    plot_logs(Path('C:/Users/ehopl/Desktop/env_test'))
+    #plot_logs(Path('C:/Users/ehopl/Desktop/env_test'))
