@@ -117,7 +117,7 @@ class Resize(object):
 #         return spec
 
 def make_bat_transforms(image_set):
-    if image_set == 'train_val':
+    if image_set == 'train':
         return T.Compose([T.ToTensor(), Resize((256, 512)), T.Normalize([0.058526332422855], [0.1667903737826997])])
     if image_set == 'test':
         return T.Compose([T.ToTensor(), Resize((256, 512)), T.Normalize([0.050141380321473965], [0.3160132308495623])])
@@ -132,15 +132,15 @@ def build(image_set, args):
         #"test": ('C:/Users/ehopl/Desktop/bat_data/annotations/test.json', 'C:/Users/ehopl/Desktop/bat_data/audio/mc_2019/audio/'),
 
         ### GPU CLUSTER PATH
-        "train_val": ('/home/s1764306/data/annotations/coco_v_train.json', '/home/s1764306/data/audio/mc_2018/audio/'),
+        "train": ('/home/s1764306/data/annotations/coco_v_train.json', '/home/s1764306/data/audio/mc_2018/audio/'),
         "test": ('/home/s1764306/data/annotations/coco_v_test.json', '/home/s1764306/data/audio/mc_2019/audio/'),
     }
 
-    if image_set == 'train_val':
-        ann_file, audio_file = PATHS['train_val']
+    if image_set == 'train':
+        ann_file, audio_file = PATHS['train']
         dataset = BatDetection(ann_file = ann_file, audio_folder= audio_file, transforms=make_bat_transforms(image_set), return_masks = False)
-        train_set, val_set = torch.utils.data.random_split(dataset, [int(len(dataset)*0.8), len(dataset)-int(len(dataset)*0.8)])
-        return train_set, val_set
+        #train_set, val_set = torch.utils.data.random_split(dataset, [int(len(dataset)*0.8), len(dataset)-int(len(dataset)*0.8)])
+        return dataset#train_set, val_set
 
     elif image_set == 'test':
         ann_file, audio_file = PATHS['test']

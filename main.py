@@ -142,8 +142,8 @@ def main(args):
                                   weight_decay=args.weight_decay)
     lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, args.lr_drop)
 
-    dataset_train, dataset_val = build_bat_dataset(image_set='train_val', args=args)
-    dataset_test = build_bat_dataset(image_set='test', args=args)
+    dataset_train= build_bat_dataset(image_set='train', args=args)
+    dataset_val = build_bat_dataset(image_set='test', args=args)
 
     if args.distributed:
         sampler_train = DistributedSampler(dataset_train)
@@ -219,7 +219,7 @@ def main(args):
                 }, checkpoint_path)
 
         test_stats, coco_evaluator = evaluate(
-            model, criterion, postprocessors, data_loader_val, base_ds, device, args.output_dir
+            model, criterion, postprocessors, data_loader_val, base_ds, device, args.output_dir, epoch, args.epochs
         )
 
         log_stats = {**{f'train_{k}': v for k, v in train_stats.items()},

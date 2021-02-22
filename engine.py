@@ -85,7 +85,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
     print("Averaged stats:", metric_logger)
 
     #########
-    json_file = "/home/s1764306/slurm_logs/predicted_bboxes.json" 
+    json_file = "/home/s1764306/slurm_logs/predicted_bboxes_train.json" 
     json.dump(l_d, codecs.open(json_file, 'w', encoding='utf-8'), sort_keys=True, indent=4)
     #with open('/home/s1764306/slurm_logs/predicted_bboxes.json', 'w') as f:
     #    json.dump(l_d , f)
@@ -95,7 +95,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
 
 
 @torch.no_grad()
-def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, output_dir):
+def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, output_dir, epoch: int, last_epoch):
     model.eval()
     criterion.eval()
 
@@ -107,11 +107,29 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, out
     coco_evaluator = CocoEvaluator(base_ds, iou_types)
     #coco_evaluator.coco_eval[iou_types[0]].params.iouThrs = [0, 0.1, 0.5, 0.75]
 
+
+    pp = PostProcess()
+    l_d = []
+
+
     for samples, targets in metric_logger.log_every(data_loader, 10, header):
         samples = samples.to(device)
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
 
         outputs = model(samples)
+
+        outputs_j = {k: v.to(device) for k, v in outputs.items() if k != "aux_outputs"}
+
+        #########
+        if epoch == last_epoch-1:
+            model_output = pp(outputs_j, torch.tensor([[256, 512],[256, 512],[256, 512],[256, 512]]).to(device))
+            model_output = [{k : v.cpu().numpy().tolist() for k, v in o.items()} for o in model_output]
+            for i, elm in enumerate(model_output):
+                elm.update({'image_id': targets[i]['image_id'].item()})
+            l_d += model_output
+        #########
+
+
         loss_dict = criterion(outputs, targets)
         weight_dict = criterion.weight_dict
 
@@ -149,5 +167,12 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, out
         print('coco evaluater not none')
         if 'bbox' in postprocessors.keys():
             stats['coco_eval_bbox'] = coco_evaluator.coco_eval['bbox'].stats.tolist()
+
+    #########
+    json_file = "/home/s1764306/slurm_logs/predicted_bboxes_test.json" 
+    json.dump(l_d, codecs.open(json_file, 'w', encoding='utf-8'), sort_keys=True, indent=4)
+    #with open('/home/s1764306/slurm_logs/predicted_bboxes.json', 'w') as f:
+    #    json.dump(l_d , f)
+    #########
 
     return stats, coco_evaluator
