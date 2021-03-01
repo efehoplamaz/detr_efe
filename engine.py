@@ -122,7 +122,7 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, out
 
         #########
         if epoch == last_epoch-1:
-            model_output = pp(outputs_j, torch.tensor([[256, 512],[256, 512],[256, 512],[256, 512]]).to(device))
+            model_output = pp(outputs_j, torch.tensor([[256, 512]]*len(outputs['pred_boxes'])).to(device))
             model_output = [{k : v.cpu().numpy().tolist() for k, v in o.items()} for o in model_output]
             for i, elm in enumerate(model_output):
                 elm.update({'image_id': targets[i]['image_id'].item()})
