@@ -14,17 +14,17 @@ args = parser.parse_args()
 if args.dataset == 'train':
 	#PATH = 'C:/Users/ehopl/Desktop/bat_data/annotations/BritishBatCalls_MartynCooke_2018_1_sec_train_expert.json'
 	#AUDIO_PATH = 'C:/Users/ehopl/Desktop/bat_data/audio/mc_2018/audio/'
-        # PATH = '/home/s1764306/data/annotations/train_val.json'
-        # AUDIO_PATH = '/home/s1764306/data/audio/mc_2018/audio/'
-        PATH = 'C:/Users/ehopl/Desktop/bat_data/annotations/train.json'
-        AUDIO_PATH = 'C:/Users/ehopl/Desktop/bat_data/audio/mc_2018/audio/'
+        PATH = '/home/s1764306/data/annotations/train.json'
+        AUDIO_PATH = '/home/s1764306/data/audio/mc_2018/audio/'
+        # PATH = 'C:/Users/ehopl/Desktop/bat_data/train.json'
+        # AUDIO_PATH = 'C:/Users/ehopl/Desktop/bat_data/audio/mc_2018/audio/'
 elif args.dataset == 'test':
 	#PATH = 'C:/Users/ehopl/Desktop/bat_data/annotations/BritishBatCalls_MartynCooke_2019_1_sec_train_expert.json'
 	#AUDIO_PATH = 'C:/Users/ehopl/Desktop/bat_data/audio/mc_2019/audio/'
-        #PATH = '/home/s1764306/data/annotations/test.json'
-        #AUDIO_PATH = '/home/s1764306/data/audio/mc_2019/audio/'
-        PATH = 'C:/Users/ehopl/Desktop/bat_data/annotations/test.json'
-        AUDIO_PATH = 'C:/Users/ehopl/Desktop/bat_data/audio/mc_2019/audio/'
+        PATH = '/home/s1764306/data/annotations/test.json'
+        AUDIO_PATH = '/home/s1764306/data/audio/mc_2019/audio/'
+        # PATH = 'C:/Users/ehopl/Desktop/bat_data/test.json'
+        # AUDIO_PATH = 'C:/Users/ehopl/Desktop/bat_data/audio/mc_2019/audio/'
 else:
 	print('No dataset like that!')
 	sys.exit()
@@ -49,7 +49,8 @@ for wav_f in os.listdir(AUDIO_PATH):
 		if d['id'] == wav_f:
 			ann = d
 			break
-	coco_data['images'].append({"file_name" : ann['id'], "height": spec.shape[0], "width": spec.shape[1], "id": image_unq_id})
+
+	coco_data['images'].append({"file_name" : wav_f, "height": spec.shape[0], "width": spec.shape[1], "id": image_unq_id})
 
 	fname = AUDIO_PATH + wav_f
 	with contextlib.closing(wave.open(fname,'r')) as f:
@@ -71,10 +72,10 @@ for wav_f in os.listdir(AUDIO_PATH):
 	image_unq_id += 1
 
 if args.dataset == 'train':
-	with open('C:/Users/ehopl/Desktop/bat_data/coco_v_train.json', 'w') as json_file:
+	with open('/home/s1764306/data/annotations/coco_v_train.json', 'w') as json_file:
 	    json.dump(coco_data, json_file)
 else:
-	with open('C:/Users/ehopl/Desktop/bat_data/coco_v_test.json', 'w') as json_file:
+	with open('/home/s1764306/data/annotations/coco_v_test.json', 'w') as json_file:
 	    json.dump(coco_data, json_file)	
 
 
