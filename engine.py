@@ -18,7 +18,7 @@ from models.detr import PostProcess
 
 def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
                     data_loader: Iterable, optimizer: torch.optim.Optimizer,
-                    device: torch.device, epoch: int, last_epoch, max_norm: float = 0):
+                    device: torch.device, epoch: int, last_epoch, max_norm: float = 0, output_path):
     model.train()
     criterion.train()
     metric_logger = utils.MetricLogger(delimiter="  ")
@@ -85,7 +85,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
     print("Averaged stats:", metric_logger)
 
     #########
-    json_file = "/home/s1764306/slurm_logs/predicted_bboxes_train.json" 
+    json_file = output_path / "predicted_bboxes_train.json" 
     json.dump(l_d, codecs.open(json_file, 'w', encoding='utf-8'), sort_keys=True, indent=4)
     #with open('/home/s1764306/slurm_logs/predicted_bboxes.json', 'w') as f:
     #    json.dump(l_d , f)
@@ -105,7 +105,7 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, out
 
     iou_types = tuple(k for k in ('segm', 'bbox') if k in postprocessors.keys())
     coco_evaluator = CocoEvaluator(base_ds, iou_types)
-    #coco_evaluator.coco_eval[iou_types[0]].params.iouThrs = [0, 0.1, 0.5, 0.75]
+    coco_evaluator.coco_eval[iou_types[0]].params.iouThrs = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
 
 
     pp = PostProcess()
@@ -169,7 +169,7 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, out
             stats['coco_eval_bbox'] = coco_evaluator.coco_eval['bbox'].stats.tolist()
 
     #########
-    json_file = "/home/s1764306/slurm_logs/predicted_bboxes_test.json" 
+    json_file = output_dir + "/predicted_bboxes_test.json" 
     json.dump(l_d, codecs.open(json_file, 'w', encoding='utf-8'), sort_keys=True, indent=4)
     #with open('/home/s1764306/slurm_logs/predicted_bboxes.json', 'w') as f:
     #    json.dump(l_d , f)
