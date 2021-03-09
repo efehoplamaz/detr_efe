@@ -41,6 +41,7 @@ def get_args_parser():
                         help="If true, we replace stride with dilation in the last convolutional block (DC5)")
     parser.add_argument('--position_embedding', default='sine', type=str, choices=('sine', 'learned'),
                         help="Type of positional embedding to use on top of the image features")
+    parser.add_argument('--preTrainedBackbone', default=False, help = 'Set True if you want to have backbone pretrained, else set False.')
 
     # * Transformer
     parser.add_argument('--enc_layers', default=6, type=int,
@@ -181,12 +182,10 @@ def main(args):
         ######
         del checkpoint["model"]["class_embed.weight"]
         del checkpoint["model"]["class_embed.bias"]
-        #print(type(checkpoint['model']))
-        #checkpoint['model'] = {k for k in checkpoint['model'] if 'backbone' not in k}
-        #for k in list(checkpoint['model']):
-        #    if 'backbone' in k:
-        #        del checkpoint['model'][k]
-        #print(checkpoint['model'].keys())
+        if not args.preTrainedBackbone:
+            for k in list(checkpoint['model']):
+                if 'backbone' in k:
+                    del checkpoint['model'][k]
         ####
         model_without_ddp.load_state_dict(checkpoint['model'], strict = False)
 
