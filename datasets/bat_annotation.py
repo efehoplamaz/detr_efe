@@ -134,17 +134,28 @@ def build(image_set, args):
         ### GPU CLUSTER PATH
         "train": ('/home/s1764306/data/annotations/coco_v_train.json', '/home/s1764306/data/audio/mc_2018/audio/'),
         "test": ('/home/s1764306/data/annotations/coco_v_test.json', '/home/s1764306/data/audio/mc_2019/audio/'),
+
+        "train_b": ('/home/s1764306/data/annotations/coco_v_train_b.json', '/home/s1764306/data/audio/mc_2018/audio/'),
+        "test_b": ('/home/s1764306/data/annotations/coco_v_test_b.json', '/home/s1764306/data/audio/mc_2019/audio/'),
     }
 
     if image_set == 'train':
-        ann_file, audio_file = PATHS['train']
-        dataset = BatDetection(ann_file = ann_file, audio_folder= audio_file, transforms=make_bat_transforms(image_set), return_masks = False)
-        #train_set, val_set = torch.utils.data.random_split(dataset, [int(len(dataset)*0.8), len(dataset)-int(len(dataset)*0.8)])
-        return dataset#train_set, val_set
+        if args.bigger_bbox == "True":
+            ann_file, audio_file = PATHS['train_b']
+            dataset = BatDetection(ann_file = ann_file, audio_folder= audio_file, transforms=make_bat_transforms(image_set), return_masks = False)
+        else:
+            ann_file, audio_file = PATHS['train']
+            dataset = BatDetection(ann_file = ann_file, audio_folder= audio_file, transforms=make_bat_transforms(image_set), return_masks = False)
+        return dataset
 
     elif image_set == 'test':
-        ann_file, audio_file = PATHS['test']
-        dataset = BatDetection(ann_file = ann_file, audio_folder= audio_file, transforms=make_bat_transforms(image_set), return_masks = False)
+        if args.bigger_bbox == "True":
+            ann_file, audio_file = PATHS['test_b']
+            dataset = BatDetection(ann_file = ann_file, audio_folder= audio_file, transforms=make_bat_transforms(image_set), return_masks = False)
+        else:
+            ann_file, audio_file = PATHS['test']
+            dataset = BatDetection(ann_file = ann_file, audio_folder= audio_file, transforms=make_bat_transforms(image_set), return_masks = False)
         return dataset
+        
     else:
         return None

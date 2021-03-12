@@ -8,8 +8,11 @@ import wave
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset')
+parser.add_argument('--bigger_bbox')
 
 args = parser.parse_args()
+
+print(type(args.bigger_bbox))
 
 if args.dataset == 'train':
 	#PATH = 'C:/Users/ehopl/Desktop/bat_data/annotations/BritishBatCalls_MartynCooke_2018_1_sec_train_expert.json'
@@ -66,17 +69,28 @@ for wav_f in os.listdir(AUDIO_PATH):
 				w = (a['end_time'] - a['start_time']) * (spec.shape[1]/duration)
 				h = (a['high_freq'] - a['low_freq']) * (spec.shape[0]/120000)
 				area = w * h
-				coco_data['annotations'].append({"id": ann_unq_id, "bbox":  [lb_x, lb_y, w, h], "image_id": image_unq_id, "segmentation" : [], "area" : area, "category_id": 0, "iscrowd": 0}) ## Left-bottom, width, height
+				if args.bigger_bbox == "True":
+					coco_data['annotations'].append({"id": ann_unq_id, "bbox":  [(lb_x-(w/2)), (lb_y-(h/2)), 2*w, 2*h], "image_id": image_unq_id, "segmentation" : [], "area" : area, "category_id": 0, "iscrowd": 0})
+				else:
+					coco_data['annotations'].append({"id": ann_unq_id, "bbox":  [lb_x, lb_y, w, h], "image_id": image_unq_id, "segmentation" : [], "area" : area, "category_id": 0, "iscrowd": 0}) ## Left-bottom, width, height
 				ann_unq_id += 1
 
 	image_unq_id += 1
 
 if args.dataset == 'train':
-	with open('/home/s1764306/data/annotations/coco_v_train.json', 'w') as json_file:
-	    json.dump(coco_data, json_file)
+	if args.bigger_bbox == "True":
+		with open('/home/s1764306/data/annotations/coco_v_train_b.json', 'w') as json_file:
+		    json.dump(coco_data, json_file)
+	else:
+		with open('/home/s1764306/data/annotations/coco_v_train.json', 'w') as json_file:
+		    json.dump(coco_data, json_file)
 else:
-	with open('/home/s1764306/data/annotations/coco_v_test.json', 'w') as json_file:
-	    json.dump(coco_data, json_file)	
+	if args.bigger_bbox == "True":
+		with open('/home/s1764306/data/annotations/coco_v_test_b.json', 'w') as json_file:
+		    json.dump(coco_data, json_file)
+	else:
+		with open('/home/s1764306/data/annotations/coco_v_test.json', 'w') as json_file:
+		    json.dump(coco_data, json_file)	
 
 
 
