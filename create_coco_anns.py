@@ -12,8 +12,6 @@ parser.add_argument('--bigger_bbox')
 
 args = parser.parse_args()
 
-print(type(args.bigger_bbox))
-
 if args.dataset == 'train':
 	#PATH = 'C:/Users/ehopl/Desktop/bat_data/annotations/BritishBatCalls_MartynCooke_2018_1_sec_train_expert.json'
 	#AUDIO_PATH = 'C:/Users/ehopl/Desktop/bat_data/audio/mc_2018/audio/'

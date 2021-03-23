@@ -183,10 +183,6 @@ def main(args):
         ######
         del checkpoint["model"]["class_embed.weight"]
         del checkpoint["model"]["class_embed.bias"]
-        if not args.preTrainedBackbone:
-            for k in list(checkpoint['model']):
-                if 'backbone' in k:
-                    del checkpoint['model'][k]
         ####
         model_without_ddp.load_state_dict(checkpoint['model'], strict = False)
 
