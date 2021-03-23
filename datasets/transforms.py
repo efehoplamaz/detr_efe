@@ -240,9 +240,10 @@ class RandomErasing(object):
 
 
 class Normalize(object):
-    def __init__(self, mean, std):
+    def __init__(self, mean, std, custom_backbone):
         self.mean = mean
         self.std = std
+        self.custom_backbone = custom_backbone
 
     def __call__(self, image, target=None):
         image = F.normalize(image, mean=self.mean, std=self.std)
@@ -256,9 +257,10 @@ class Normalize(object):
             boxes = boxes / torch.tensor([w, h, w, h], dtype=torch.float32)
             target["boxes"] = boxes
 
-        ####
-        image = image.repeat(3,1,1)
-        ####
+        if self.custom_backbone == 'False':
+            ####
+            image = image.repeat(3,1,1)
+            ####
 
         return image, target
 

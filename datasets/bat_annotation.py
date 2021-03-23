@@ -116,11 +116,11 @@ class Resize(object):
 #                 pass
 #         return spec
 
-def make_bat_transforms(image_set):
+def make_bat_transforms(image_set, custom_backbone):
     if image_set == 'train':
-        return T.Compose([T.ToTensor(), Resize((256, 512)), T.Normalize([0.058526332422855], [0.1667903737826997])])
+        return T.Compose([T.ToTensor(), Resize((256, 512)), T.Normalize([0.058526332422855], [0.1667903737826997], custom_backbone)])
     if image_set == 'test':
-        return T.Compose([T.ToTensor(), Resize((256, 512)), T.Normalize([0.050141380321473965], [0.3160132308495623])])
+        return T.Compose([T.ToTensor(), Resize((256, 512)), T.Normalize([0.050141380321473965], [0.3160132308495623], custom_backbone)])
 
 def build(image_set, args):
 
@@ -128,33 +128,33 @@ def build(image_set, args):
     PATHS = {
         
         ### LOCAL COMPUTER PATH
-        #"train_val": ('C:/Users/ehopl/Desktop/bat_data/annotations/train_val.json', 'C:/Users/ehopl/Desktop/bat_data/audio/mc_2018/audio/'),
-        #"test": ('C:/Users/ehopl/Desktop/bat_data/annotations/test.json', 'C:/Users/ehopl/Desktop/bat_data/audio/mc_2019/audio/'),
+        "train": ('C:/Users/ehopl/Desktop/bat_data/coco_v_train.json', 'C:/Users/ehopl/Desktop/bat_data/audio/mc_2018/audio/'),
+        "test": ('C:/Users/ehopl/Desktop/bat_data/coco_v_test.json', 'C:/Users/ehopl/Desktop/bat_data/audio/mc_2019/audio/'),
 
         ### GPU CLUSTER PATH
-        "train": ('/home/s1764306/data/annotations/coco_v_train.json', '/home/s1764306/data/audio/mc_2018/audio/'),
-        "test": ('/home/s1764306/data/annotations/coco_v_test.json', '/home/s1764306/data/audio/mc_2019/audio/'),
+        #"train": ('/home/s1764306/data/annotations/coco_v_train.json', '/home/s1764306/data/audio/mc_2018/audio/'),
+        #"test": ('/home/s1764306/data/annotations/coco_v_test.json', '/home/s1764306/data/audio/mc_2019/audio/'),
 
-        "train_b": ('/home/s1764306/data/annotations/coco_v_train_b.json', '/home/s1764306/data/audio/mc_2018/audio/'),
-        "test_b": ('/home/s1764306/data/annotations/coco_v_test_b.json', '/home/s1764306/data/audio/mc_2019/audio/'),
+        #"train_b": ('/home/s1764306/data/annotations/coco_v_train_b.json', '/home/s1764306/data/audio/mc_2018/audio/'),
+        #"test_b": ('/home/s1764306/data/annotations/coco_v_test_b.json', '/home/s1764306/data/audio/mc_2019/audio/'),
     }
 
     if image_set == 'train':
         if args.bigger_bbox == "True":
             ann_file, audio_file = PATHS['train_b']
-            dataset = BatDetection(ann_file = ann_file, audio_folder= audio_file, transforms=make_bat_transforms(image_set), return_masks = False)
+            dataset = BatDetection(ann_file = ann_file, audio_folder= audio_file, transforms=make_bat_transforms(image_set, args.custom_backbone), return_masks = False)
         else:
             ann_file, audio_file = PATHS['train']
-            dataset = BatDetection(ann_file = ann_file, audio_folder= audio_file, transforms=make_bat_transforms(image_set), return_masks = False)
+            dataset = BatDetection(ann_file = ann_file, audio_folder= audio_file, transforms=make_bat_transforms(image_set, args.custom_backbone), return_masks = False)
         return dataset
 
     elif image_set == 'test':
         if args.bigger_bbox == "True":
             ann_file, audio_file = PATHS['test_b']
-            dataset = BatDetection(ann_file = ann_file, audio_folder= audio_file, transforms=make_bat_transforms(image_set), return_masks = False)
+            dataset = BatDetection(ann_file = ann_file, audio_folder= audio_file, transforms=make_bat_transforms(image_set, args.custom_backbone), return_masks = False)
         else:
             ann_file, audio_file = PATHS['test']
-            dataset = BatDetection(ann_file = ann_file, audio_folder= audio_file, transforms=make_bat_transforms(image_set), return_masks = False)
+            dataset = BatDetection(ann_file = ann_file, audio_folder= audio_file, transforms=make_bat_transforms(image_set, args.custom_backbone), return_masks = False)
         return dataset
         
     else:
