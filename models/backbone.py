@@ -83,7 +83,8 @@ class BackboneBase(nn.Module):
 class CustomBackboneBase(nn.Module):
     def __init__(self, backbone: nn.Module, train_backbone: bool, num_channels: int, return_interm_layers: bool):
         super().__init__()
-        self.body = IntermediateLayerGetter(backbone, return_layers={"conv1": 0, "relu1": 1, "bn16": 2, "mx1": 3, "conv2": 4, "relu2": 5, "bn32": 6, "mx2": 7, "conv3": 8, "relu3": 9, "bn64": 10, "conv4": 11})
+        print(backbone)
+        self.body = IntermediateLayerGetter(backbone, return_layers={"conv1": 0, "relu1": 1, "bn16": 2, "mx1": 3, "conv2": 4, "relu2": 5, "bn32": 6, "mx2": 7, "conv3": 8, "relu3": 9, "bn64": 10})
         self.num_channels = num_channels
 
     def forward(self, tensor_list: NestedTensor):
@@ -118,7 +119,7 @@ class CustomBackbone(nn.Module):
         self.relu3 = nn.ReLU()
         self.bn64  = nn.BatchNorm2d(64)
 
-        self.conv4 = nn.Conv2d(64, hidden_dim, 1)
+        #self.conv4 = nn.Conv2d(64, hidden_dim, 1)
 
     def forward(self, x):
 
@@ -138,7 +139,7 @@ class CustomBackbone(nn.Module):
         out = self.relu3(out)
         out = self.bn64(out)
 
-        out = self.conv4(out)
+        #out = self.conv4(out)
 
         return out
 
@@ -148,7 +149,8 @@ class CreateCustomBackbone(CustomBackboneBase):
                  return_interm_layers: bool,
                  dilation: bool):
         backbone = CustomBackbone()
-        super().__init__(backbone, train_backbone, 1, return_interm_layers)
+        num_channels = 64
+        super().__init__(backbone, train_backbone, num_channels, return_interm_layers)
 
 class Backbone(BackboneBase):
     """ResNet backbone with frozen BatchNorm."""

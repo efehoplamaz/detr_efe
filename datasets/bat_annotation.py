@@ -128,15 +128,15 @@ def build(image_set, args):
     PATHS = {
         
         ### LOCAL COMPUTER PATH
-        #"train": ('C:/Users/ehopl/Desktop/bat_data/coco_v_train.json', 'C:/Users/ehopl/Desktop/bat_data/audio/mc_2018/audio/'),
-        #"test": ('C:/Users/ehopl/Desktop/bat_data/coco_v_test.json', 'C:/Users/ehopl/Desktop/bat_data/audio/mc_2019/audio/'),
+        "train": ('C:/Users/ehopl/Desktop/bat_data/coco_v_train.json', 'C:/Users/ehopl/Desktop/bat_data/audio/mc_2018/audio/'),
+        "test": ('C:/Users/ehopl/Desktop/bat_data/coco_v_test.json', 'C:/Users/ehopl/Desktop/bat_data/audio/mc_2019/audio/'),
 
         ### GPU CLUSTER PATH
-        "train": ('/home/s1764306/data/annotations/coco_v_train.json', '/home/s1764306/data/audio/mc_2018/audio/'),
-        "test": ('/home/s1764306/data/annotations/coco_v_test.json', '/home/s1764306/data/audio/mc_2019/audio/'),
+        #"train": ('/home/s1764306/data/annotations/coco_v_train.json', '/home/s1764306/data/audio/mc_2018/audio/'),
+        #"test": ('/home/s1764306/data/annotations/coco_v_test.json', '/home/s1764306/data/audio/mc_2019/audio/'),
 
-        "train_b": ('/home/s1764306/data/annotations/coco_v_train_b.json', '/home/s1764306/data/audio/mc_2018/audio/'),
-        "test_b": ('/home/s1764306/data/annotations/coco_v_test_b.json', '/home/s1764306/data/audio/mc_2019/audio/'),
+        #"train_b": ('/home/s1764306/data/annotations/coco_v_train_b.json', '/home/s1764306/data/audio/mc_2018/audio/'),
+        #"test_b": ('/home/s1764306/data/annotations/coco_v_test_b.json', '/home/s1764306/data/audio/mc_2019/audio/'),
     }
 
     if image_set == 'train':
