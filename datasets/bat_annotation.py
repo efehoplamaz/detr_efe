@@ -142,10 +142,10 @@ def build(image_set, args):
     if image_set == 'train':
         if args.bigger_bbox == "True":
             ann_file, audio_file = PATHS['train_b']
-            dataset = BatDetection(ann_file = ann_file, audio_folder= audio_file, transforms=make_bat_transforms(image_set, args.custom_backbone), return_masks = False)
+            dataset = BatDetection(ann_file = ann_file, audio_folder= audio_file, transforms=make_bat_transforms(image_set, args.custom_backbone_1d), return_masks = False)
         else:
             ann_file, audio_file = PATHS['train']
-            dataset = BatDetection(ann_file = ann_file, audio_folder= audio_file, transforms=make_bat_transforms(image_set, args.custom_backbone), return_masks = False)
+            dataset = BatDetection(ann_file = ann_file, audio_folder= audio_file, transforms=make_bat_transforms(image_set, args.custom_backbone_1d), return_masks = False)
         return dataset
 
     elif image_set == 'test':

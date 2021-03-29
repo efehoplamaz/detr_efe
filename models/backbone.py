@@ -98,6 +98,24 @@ class CustomBackboneBase(nn.Module):
             out[name] = NestedTensor(x, mask)
         return out
 
+class CustomBackboneBaseWithout1D(nn.Module):
+    def __init__(self, backbone: nn.Module, train_backbone: bool, num_channels: int, return_interm_layers: bool):
+        super().__init__()
+        #print(backbone)
+        self.body = IntermediateLayerGetter(backbone, return_layers={"conv1": 0, "relu1": 1, "bn16": 2, "mx1": 3, "conv2": 4, "relu2": 5, "bn32": 6, "mx2": 7, "conv3": 8, "relu3": 9, "bn64": 10, "mx3": 11})
+        self.num_channels = num_channels
+
+    def forward(self, tensor_list: NestedTensor):
+        xs = self.body(tensor_list.tensors.float())
+        #print(type(xs), type(tensor_list.tensors.float()))
+        out: Dict[str, NestedTensor] = {}
+        for name, x in xs.items():
+            m = tensor_list.mask
+            assert m is not None
+            mask = F.interpolate(m[None].float(), size=x.shape[-2:]).to(torch.bool)[0]
+            out[name] = NestedTensor(x, mask)
+        return out
+
 class CustomBackbone(nn.Module):
     def __init__(self, hidden_dim = 256):
 
@@ -143,7 +161,65 @@ class CustomBackbone(nn.Module):
 
         return out
 
+class CustomBackboneWithout1D(nn.Module):
+    def __init__(self, hidden_dim = 256):
+
+        super(CustomBackbone, self).__init__()
+
+        self.conv1 = nn.Conv2d(1, 16, (3,3), stride = 1)
+        self.relu1 = nn.ReLU()
+        self.bn16  = nn.BatchNorm2d(16)
+
+        self.mx1   = nn.MaxPool2d(2)
+
+        self.conv2 = nn.Conv2d(16, 32, (3,3), stride = 1)
+        self.relu2 = nn.ReLU()
+        self.bn32  = nn.BatchNorm2d(32)
+
+        self.mx2   = nn.MaxPool2d(2)
+
+        self.conv3 = nn.Conv2d(32, 64, (3,3), stride = 1)
+        self.relu3 = nn.ReLU()
+        self.bn64  = nn.BatchNorm2d(64)
+
+        self.mx3   = nn.MaxPool2d(2)
+
+        #self.conv4 = nn.Conv2d(64, hidden_dim, 1)
+
+    def forward(self, x):
+
+        out = self.conv1(x)
+        out = self.relu1(out)
+        out = self.bn16(out)
+
+        out = self.mx1(out)
+
+        out = self.conv2(out)
+        out = self.relu2(out)
+        out = self.bn32(out)
+
+        out = self.mx2(out)
+
+        out = self.conv3(out)
+        out = self.relu3(out)
+        out = self.bn64(out)
+
+        out = self.mx3(out)
+        #out = self.conv4(out)
+
+        return out
+
+
 class CreateCustomBackbone(CustomBackboneBase):
+    def __init__(self, name: str,
+                 train_backbone: bool,
+                 return_interm_layers: bool,
+                 dilation: bool):
+        backbone = CustomBackbone()
+        num_channels = 64
+        super().__init__(backbone, train_backbone, num_channels, return_interm_layers)
+
+class CreateCustomBackboneWithout1D(CustomBackboneBaseWithout1D):
     def __init__(self, name: str,
                  train_backbone: bool,
                  return_interm_layers: bool,
@@ -186,9 +262,11 @@ def build_backbone(args):
     position_embedding = build_position_encoding(args)
     train_backbone = args.lr_backbone > 0
     return_interm_layers = args.masks
-    if args.custom_backbone:
+    if args.custom_backbone == 'True':
         backbone = CreateCustomBackbone(args.backbone, train_backbone, return_interm_layers, args.dilation)
-    else:
+    if args.custom_backbone_1d == 'True':
+        backbone = CreateCustomBackboneWithout1D(args.backbone, train_backbone, return_interm_layers, args.dilation)
+    if args.custom_backbone != 'True' and args.custom_backbone_1d != 'True':
         backbone = Backbone(args.backbone, train_backbone, return_interm_layers, args.dilation)
     model = Joiner(backbone, position_embedding)
     model.num_channels = backbone.num_channels
