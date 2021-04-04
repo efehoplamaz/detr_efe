@@ -84,6 +84,7 @@ def get_args_parser():
 
     # dataset parameters
     parser.add_argument('--bigger_bbox', default = 'False')
+    parser.add_argument('--custom', default = 'False')
     parser.add_argument('--custom_backbone', default = 'False')
     parser.add_argument('--custom_backbone_1d', default = 'False')
     parser.add_argument('--dataset_file', default='coco')
