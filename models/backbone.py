@@ -102,7 +102,7 @@ class CustomBackboneBaseWithout1D(nn.Module):
     def __init__(self, backbone: nn.Module, train_backbone: bool, num_channels: int, return_interm_layers: bool):
         super().__init__()
         #print(backbone)
-        self.body = IntermediateLayerGetter(backbone, return_layers={"conv1": 0, "relu1": 1, "bn16": 2, "mx1": 3, "conv2": 4, "relu2": 5, "bn32": 6, "mx2": 7, "conv3": 8, "relu3": 9, "bn64": 10, "mx3": 11})
+        self.body = IntermediateLayerGetter(backbone, return_layers={"conv1": 0, "relu1": 1, "bn16": 2, "mx1": 3, "conv2": 4, "relu2": 5, "bn32": 6, "mx2": 7, "conv3": 8, "relu3": 9, "bn64": 10, "mx3": 11, "conv4": 12, "relu4": 13, "bn64_2": 14, "mx4": 15, "conv5": 16, "relu5": 17, "bn64_3": 18, "mx5": 19})
         self.num_channels = num_channels
 
     def forward(self, tensor_list: NestedTensor):
@@ -182,7 +182,19 @@ class CustomBackboneWithout1D(nn.Module):
         self.relu3 = nn.ReLU()
         self.bn64  = nn.BatchNorm2d(64)
 
-        self.mx3   = nn.MaxPool2d(2)
+        self.mx3   = nn.MaxPool2d(2)  #30, 62
+
+        self.conv4 = nn.Conv2d(64, 64, (3,3), stride = 1)
+        self.relu4 = nn.ReLU()
+        self.bn64_2  = nn.BatchNorm2d(64)
+
+        self.mx4 = nn.MaxPool2d(2) #15, 31
+
+        self.conv5 = nn.Conv2d(64, 64, (3,3), stride = 1)
+        self.relu5 = nn.ReLU()
+        self.bn64_3  = nn.BatchNorm2d(64)
+
+        self.mx5 = nn.MaxPool2d(2) #7, 15
 
         #self.conv4 = nn.Conv2d(64, hidden_dim, 1)
 
@@ -205,7 +217,18 @@ class CustomBackboneWithout1D(nn.Module):
         out = self.bn64(out)
 
         out = self.mx3(out)
-        #out = self.conv4(out)
+        
+        out = self.conv4(out)
+        out = self.relu4(out)
+        out = self.bn64_2(out)
+
+        out = self.mx4(out)
+
+        out = self.conv5(out)
+        out = self.relu5(out)
+        out = self.bn64_3(out)
+
+        out = self.mx5(out)
 
         return out
 
