@@ -260,6 +260,7 @@ class Normalize(object):
         if self.custom_backbone == 'False':
             ####
             image = image.repeat(3,1,1)
+            print("Normalize transform, inside 3 repeat")
             ####
 
         return image, target
