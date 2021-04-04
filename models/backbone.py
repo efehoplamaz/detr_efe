@@ -164,7 +164,7 @@ class CustomBackbone(nn.Module):
 class CustomBackboneWithout1D(nn.Module):
     def __init__(self, hidden_dim = 256):
 
-        super(CustomBackbone, self).__init__()
+        super(CustomBackboneWithout1D, self).__init__()
 
         self.conv1 = nn.Conv2d(1, 16, (3,3), stride = 1)
         self.relu1 = nn.ReLU()
@@ -224,7 +224,7 @@ class CreateCustomBackboneWithout1D(CustomBackboneBaseWithout1D):
                  train_backbone: bool,
                  return_interm_layers: bool,
                  dilation: bool):
-        backbone = CustomBackbone()
+        backbone = CustomBackboneWithout1D()
         num_channels = 64
         super().__init__(backbone, train_backbone, num_channels, return_interm_layers)
 
