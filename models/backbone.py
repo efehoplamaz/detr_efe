@@ -84,7 +84,7 @@ class CustomBackboneBase(nn.Module):
     def __init__(self, backbone: nn.Module, train_backbone: bool, num_channels: int, return_interm_layers: bool):
         super().__init__()
         #print(backbone)
-        self.body = IntermediateLayerGetter(backbone, return_layers={"conv1": 0, "relu1": 1, "bn16": 2, "mx1": 3, "conv2": 4, "relu2": 5, "bn32": 6, "mx2": 7, "conv3": 8, "relu3": 9, "bn64": 10})
+        self.body = IntermediateLayerGetter(backbone, return_layers={"conv1": 0, "relu1": 1, "bn16": 2, "mx1": 3, "conv2": 4, "relu2": 5, "bn32": 6, "mx2": 7, "conv3": 8, "relu3": 9, "bn64": 10, "mx3": 11, "conv4": 12, "relu4": 13, "bn64_2": 14})
         self.num_channels = num_channels
 
     def forward(self, tensor_list: NestedTensor):
@@ -121,21 +121,27 @@ class CustomBackbone(nn.Module):
 
         super(CustomBackbone, self).__init__()
 
-        self.conv1 = nn.Conv2d(1, 16, (7,7), stride = 1)
+        self.conv1 = nn.Conv2d(1, 16, (3,3), stride = 1)
         self.relu1 = nn.ReLU()
         self.bn16  = nn.BatchNorm2d(16)
 
         self.mx1   = nn.MaxPool2d(2)
 
-        self.conv2 = nn.Conv2d(16, 32, (5,5), stride = 1)
+        self.conv2 = nn.Conv2d(16, 32, (3,3), stride = 1)
         self.relu2 = nn.ReLU()
         self.bn32  = nn.BatchNorm2d(32)
 
         self.mx2   = nn.MaxPool2d(2)
 
-        self.conv3 = nn.Conv1d(32, 64, (60,1), stride = 1)
+        self.conv3 = nn.Conv2d(32, 64, (3,3), stride = 1)
         self.relu3 = nn.ReLU()
         self.bn64  = nn.BatchNorm2d(64)
+
+        self.mx3 = nn.MaxPool2d(2)
+
+        self.conv4 = nn.Conv2d(64, 64, (30,1), stride = 1)
+        self.relu4 = nn.ReLU()
+        self.bn64_2  = nn.BatchNorm2d(64)
 
         #self.conv4 = nn.Conv2d(64, hidden_dim, 1)
 
@@ -157,7 +163,11 @@ class CustomBackbone(nn.Module):
         out = self.relu3(out)
         out = self.bn64(out)
 
-        #out = self.conv4(out)
+        out = self.mx3(out)
+
+        out = self.conv4(out)
+        out = self.relu4(out)
+        out = self.bn64_2(out)
 
         return out
 
